@@ -1,0 +1,28 @@
+# Build outputs
+/bin/
+*.o
+*.a
+*.so
+*.dylib
+*.out
+
+# Test artefacts
+*.tmp
+*.diff
+/tests/.tmp/
+
+# Debugging
+*.dSYM/
+core
+core.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating systems
+.DS_Store
+Thumbs.db
