@@ -38,12 +38,12 @@ flowchart LR
 
 | Command | Core focus | Status |
 |---|---|---|
-| [`mini_echo`](mini_echo/) | `argc`, `argv`, nested traversal, output formatting | Planned |
+| [`mini_echo`](mini_echo/) | `argc`, `argv`, nested traversal, output formatting | **Complete** |
 | [`mini_cat`](mini_cat/) | standard input, files, `read()`, `write()`, buffers | Planned |
 | [`mini_cp`](mini_cp/) | file descriptors, `open()`, binary-safe copying, partial writes | Planned |
 | [`mini_wc`](mini_wc/) | stream processing, state transitions, line/word/byte counting | Planned |
 
-The generated repository intentionally contains **compile-ready starter files, not completed solutions**. A source remains inactive while it contains:
+Each unfinished command begins as a **compile-ready starter**, not a completed solution. A source remains inactive while it contains:
 
 ```c
 /* PROJECT_STATUS: TODO */

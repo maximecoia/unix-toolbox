@@ -1,15 +1,28 @@
-/* PROJECT_STATUS: TODO */
-/* Remove the marker above only when the implementation is ready for tests. */
-
 #include <unistd.h>
 
 int main(int argc, char **argv)
 {
-    static const char message[] = "mini_echo: implementation pending\n";
+    int i;
+    int j;
 
-    (void)argc;
-    (void)argv;
-    if (write(2, message, sizeof(message) - 1) == -1)
+    i = 1;
+    while (i < argc)
+    {
+        if (i > 1)
+        {
+            if (write(1, " ", 1) != 1)
+                return (1);
+        }
+        j = 0;
+        while (argv[i][j] != '\0')
+        {
+            if (write(1, &argv[i][j], 1) != 1)
+                return (1);
+            j++;
+        }
+        i++;
+    }
+    if (write(1, "\n", 1) != 1)
         return (1);
-    return (1);
+    return (0);
 }
