@@ -34,10 +34,10 @@ The goal is not to clone the full GNU/BSD commands. It is to rebuild a focused s
 
 ```mermaid
 flowchart LR
-    E[mini_echo<br/>arguments + write]
-    C[mini_cat<br/>read + buffers]
-    P[mini_cp<br/>open + copy]
-    W[mini_wc<br/>state + counters]
+    E["mini_echo · argc/argv + write()"]
+    C["mini_cat · read() + buffers"]
+    P["mini_cp · open() + copy loop"]
+    W["mini_wc · stream state + counters"]
 
     E --> C --> P --> W
 ```
