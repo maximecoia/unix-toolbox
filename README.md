@@ -1,45 +1,86 @@
+<div align="center">
+
 # unix-toolbox
 
+**Small Unix utilities rebuilt in C, one mechanism at a time.**
+
 [![CI](https://github.com/maximecoia/unix-toolbox/actions/workflows/ci.yml/badge.svg)](https://github.com/maximecoia/unix-toolbox/actions/workflows/ci.yml)
+[![C99](https://img.shields.io/badge/C-C99-00599C.svg)](https://en.wikipedia.org/wiki/C99)
 
-I started this repository after the 42 Piscine because I noticed a gap between **recognizing C patterns** and being able to rebuild them from an empty file.
+`mini_echo` → `mini_cat` → `mini_cp` → `mini_wc`
 
-The idea is simple: recreate a few small Unix commands in increasing difficulty and use them to practise turning a subject into variables, loops, system calls, error paths, and working C.
+</div>
 
-This is not an attempt to clone the full GNU/BSD tools. Each program intentionally implements a small contract that I can understand and explain end to end.
+---
+
+## About
+
+`unix-toolbox` is a small post-Piscine project built to deepen my understanding of C and Unix programming through progressively more demanding command-line utilities.
+
+Each program keeps a deliberately limited scope so the implementation can be understood end to end: inputs, state, control flow, system calls, failure paths, and exact observable behavior.
+
+The goal is not to clone the full GNU/BSD commands. It is to rebuild a focused subset of their behavior and understand the mechanisms underneath.
 
 ## Progress
 
 | Command | Main focus | Status |
 |---|---|---|
-| [`mini_echo`](mini_echo/) | `argc`, `argv`, nested loops, `write()` | **Complete** |
+| [`mini_echo`](mini_echo/) | `argc`, `argv`, nested traversal, `write()` | **Complete** |
 | [`mini_cat`](mini_cat/) | file descriptors, `read()`, buffers, EOF | Not started |
 | [`mini_cp`](mini_cp/) | `open()`, copying, partial writes, cleanup | Not started |
 | [`mini_wc`](mini_wc/) | counters and stream state | Not started |
 
-Planned order:
+## Progression
 
-```text
-mini_echo -> mini_cat -> mini_cp -> mini_wc
+```mermaid
+flowchart LR
+    E[mini_echo<br/>arguments + write]
+    C[mini_cat<br/>read + buffers]
+    P[mini_cp<br/>open + copy]
+    W[mini_wc<br/>state + counters]
+
+    E --> C --> P --> W
 ```
 
-The order matters because each project reuses part of the previous one and adds a new problem.
+Each step reuses part of the previous one and adds a new problem.
+
+## Current milestone
+
+### mini_echo
+
+The first completed utility reproduces a deliberately small subset of `echo`:
+
+```sh
+./bin/mini_echo hello unix
+# hello unix
+```
+
+It focuses on:
+
+- argument traversal with `argc` and `argv`;
+- nested loops over operands and characters;
+- separator placement;
+- byte-oriented output with `write()`;
+- output failure handling;
+- process exit status.
+
+Implementation notes and tests: [`mini_echo/README.md`](mini_echo/README.md)
 
 ## Build
 
 Requirements:
 
-- a C99 compiler;
+- a C99-compatible compiler;
 - `make`;
 - a POSIX-compatible shell.
 
-Build everything:
+Build all utilities:
 
 ```sh
 make
 ```
 
-Build one command:
+Build one utility:
 
 ```sh
 make mini_echo
@@ -47,15 +88,15 @@ make mini_echo
 
 Binaries are written to `bin/`.
 
-## Tests
+## Test
 
-Run the active test suites:
+Run all active suites:
 
 ```sh
 make test
 ```
 
-Or compile and test in one step:
+Compile and test:
 
 ```sh
 make check
@@ -67,64 +108,41 @@ Run one suite directly:
 sh tests/test_mini_echo.sh
 ```
 
-A project that still contains:
+Unfinished commands keep the marker:
 
 ```c
 /* PROJECT_STATUS: TODO */
 ```
 
-is treated as unfinished and its suite is skipped.
-
-## Current milestone: mini_echo
-
-`mini_echo` was the first project I completed.
-
-```sh
-./bin/mini_echo hello unix
-# hello unix
-```
-
-It looks trivial, but it was useful for practising:
-
-- `argc` and `argv`;
-- the difference between `argv[i]` and `argv[i][j]`;
-- nested loops;
-- empty string arguments;
-- separator placement;
-- passing an address to `write()`;
-- checking a system call's return value;
-- returning the correct process exit status.
-
-The project page includes the implementation notes and the mistakes I made while building it:
-
-[`mini_echo/README.md`](mini_echo/README.md)
+Their suites are skipped until the implementation is activated.
 
 ## Repository structure
 
 ```text
 unix-toolbox/
 ├── mini_echo/
+│   ├── README.md
+│   └── mini_echo.c
 ├── mini_cat/
 ├── mini_cp/
 ├── mini_wc/
 ├── tests/
 ├── docs/
+├── .github/workflows/ci.yml
 ├── Makefile
 └── README.md
 ```
 
-## Ground rules
+## Project rules
 
-For these projects I try to keep a few rules:
-
-- start from the written behavior, not from remembered code;
-- keep implementations small until there is a real reason to split them;
-- check system calls instead of assuming they succeeded;
-- use tests to inspect exact behavior, especially output bytes and exit status;
-- after finishing a project, try to reconstruct it again from a blank file.
+- keep each utility small enough to understand end to end;
+- derive control flow from required behavior rather than from remembered code;
+- check system calls instead of assuming success;
+- test exact output, stderr, and exit status;
+- add abstractions only when they solve a real problem.
 
 ## Roadmap
 
-A short roadmap is available in [`docs/roadmap.md`](docs/roadmap.md).
+The next utility is [`mini_cat`](mini_cat/).
 
-The next project is [`mini_cat`](mini_cat/).
+A short progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).

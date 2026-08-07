@@ -1,8 +1,25 @@
+<div align="center">
+
 # mini_echo
 
-A small version of `echo`, written in C with `write()`.
+**A small `echo` implementation in C using `write()`.**
 
-This was the first project in `unix-toolbox` and the main goal was not the command itself. I used it to practise rebuilding a program from a short subject instead of relying on recognition from previous exercises.
+[![Status](https://img.shields.io/badge/status-complete-2ea44f.svg)](#verification)
+[![C99](https://img.shields.io/badge/C-C99-00599C.svg)](https://en.wikipedia.org/wiki/C99)
+
+[`source`](mini_echo.c) · [`tests`](../tests/test_mini_echo.sh) · [`repository`](../README.md)
+
+</div>
+
+---
+
+## Overview
+
+`mini_echo` is the first completed utility in `unix-toolbox`.
+
+The scope is deliberately small: command-line argument traversal, exact output formatting, and error handling around `write()`.
+
+The implementation stays in one C file and avoids option parsing, allocation, and string-library helpers.
 
 ## Behavior
 
@@ -13,10 +30,10 @@ usage: mini_echo [operand ...]
 The program:
 
 - prints operands in their original order;
-- puts one space between adjacent operands;
+- places one space between adjacent operands;
 - prints no leading or trailing separator;
 - always ends with one newline;
-- treats `-n` and other dash-prefixed arguments as ordinary text;
+- treats dash-prefixed arguments as ordinary text;
 - prints only a newline when there are no operands;
 - returns non-zero if output fails.
 
@@ -38,91 +55,121 @@ Examples:
 
 ## Implementation
 
-The implementation is intentionally kept in one file.
+The program has two traversal levels:
 
-The outer loop walks through the operands:
+```text
+argv
+ └── operand i
+      └── character j
+```
+
+The outer loop starts at the first operand:
 
 ```c
 i = 1;
 while (i < argc)
 ```
 
-`argv[0]` is the program name, so the first operand is `argv[1]`.
-
-Inside that loop, `j` walks through the current string until `\0`:
+Inside it, `j` traverses the current C string:
 
 ```c
 j = 0;
 while (argv[i][j] != '\0')
 ```
 
-I print a space **before every operand except the first**. That made the separator rule easier to reason about because it avoids a trailing-space special case.
-
-Every output is a one-byte `write()` and every call is checked.
-
-## What tripped me up
-
-These were the useful mistakes in this project.
-
-### I put `i++` in the wrong block
-
-My first version incremented `i` only inside the separator condition:
+The separator rule is simple:
 
 ```text
-if i > 1
-    print space
-    i++
+space before every operand except the first
 ```
 
-For the first operand, `i > 1` is false, so `i` never changed. The outer loop kept processing the same argument forever.
+That avoids a trailing-space special case and still handles empty operands correctly.
 
-The rule I kept from that bug is:
+Each output operation requests one byte through `write()`, and every call is checked.
+
+## Control flow
+
+```mermaid
+flowchart TD
+    A[i = 1] --> B{i < argc?}
+    B -- no --> N[write newline]
+    N --> S[return 0]
+
+    B -- yes --> C{i > 1?}
+    C -- yes --> D[write space]
+    C -- no --> E[j = 0]
+    D --> E
+
+    E --> F{argv[i][j] != '\0'?}
+    F -- yes --> G[write character]
+    G --> H[j++]
+    H --> F
+
+    F -- no --> I[i++]
+    I --> B
+```
+
+All three kinds of output—separator, character, and final newline—have an immediate failure path if `write()` does not report the requested byte.
+
+## Implementation notes
+
+A few details mattered more than the size of the program suggests.
+
+### Keep loop responsibilities separate
+
+The two indexes have different ownership:
 
 ```text
 j advances after one character
-i advances after one complete operand
+i advances after one operand
 ```
 
-### I initially ignored `write()` results
+One early control-flow issue came from tying operand advancement to the separator branch. Keeping traversal and formatting independent makes the loop structure much easier to reason about.
 
-The output looked simple enough that my first instinct was just to call `write()`.
+### Place separators before later operands
 
-But the project contract says output failure must make the program fail, so the separator, each character, and the final newline all need their return values checked.
+Printing a space before every operand except the first naturally guarantees:
 
-### `write()` success is not `main()` success
+- no leading separator;
+- no trailing separator;
+- exactly one separator between adjacent operands.
 
-For a one-byte write:
+It also works for empty operands without additional branching.
+
+### Treat `write()` as an operation with a result
+
+For this implementation every call requests one byte.
 
 ```text
-write() returns 1 -> that byte was written
+write() returns 1 -> that output operation succeeded
+main() returns 0  -> the entire program succeeded
 ```
 
-But for the program:
+Keeping those two return conventions separate makes the failure path explicit.
+
+### Verify the executable you are actually running
+
+During development I once edited the source and then ran an older binary.
+
+That reinforced the actual loop:
 
 ```text
-main() returns 0 -> the program succeeded
+edit -> compile -> run -> inspect
 ```
 
-I initially had to stop and separate those two conventions.
+Source and executable are separate artifacts.
 
-### I ran an old binary once
+## Verification
 
-At one point the source had changed but the executable still printed the starter message.
-
-The issue was simply that I had not rebuilt the executable I was running.
-
-That made this workflow much more concrete:
-
-```text
-edit source -> compile -> run executable
-```
-
-## Tests
-
-Build and run the dedicated suite from the repository root:
+Build:
 
 ```sh
 make mini_echo
+```
+
+Run the dedicated test suite:
+
+```sh
 sh tests/test_mini_echo.sh
 ```
 
@@ -136,41 +183,42 @@ The tests cover:
 
 - zero operands;
 - one operand;
-- several operands;
-- an argument containing spaces;
-- an empty argument;
-- a dash-prefixed argument;
+- multiple operands;
+- embedded spaces;
+- empty operands;
+- dash-prefixed operands;
 - exact stdout;
-- empty stderr on the basic successful cases.
+- successful stderr behavior.
 
-For checking invisible spaces and the final newline manually, I also used:
+For byte-visible manual inspection:
 
 ```sh
 ./bin/mini_echo "" A "" | cat -e
 ```
 
-which should show:
+Expected:
 
 ```text
  A $
 ```
 
-## What I want to retain
+The `$` is `cat -e` showing the final newline.
 
-From this project, the part I care about remembering is the structure:
+## Takeaways
+
+The reusable structure is:
 
 ```text
 arguments
     -> characters
-        -> write one byte
+        -> output
 ```
 
-and the habit of deriving:
+The next utility changes where the bytes come from:
 
 ```text
-input -> state -> loop -> stopping condition -> update -> failure path
+mini_echo: argv -> characters -> write()
+mini_cat:  fd -> read() -> buffer -> write()
 ```
 
-instead of trying to remember the finished source.
-
-Next: [`mini_cat`](../mini_cat/), where the input moves from `argv` strings to file descriptors and `read()`.
+Next: [`mini_cat`](../mini_cat/).

@@ -1,8 +1,8 @@
 # mini_cp
 
-Status: **not implemented yet**
+> Status: **not implemented yet**
 
-A small file-copy project that will build on `mini_cat`.
+A small file-copy utility that builds on the stream-copying work from `mini_cat`.
 
 ## Goal
 
@@ -15,11 +15,11 @@ Planned behavior:
 - require one source and one destination;
 - open the source for reading;
 - create or truncate the destination;
-- copy the source bytes exactly;
+- preserve source bytes exactly;
 - handle partial writes;
 - return non-zero on usage or I/O failure.
 
-## What I expect to practise
+## Focus
 
 - `open()` flags;
 - file descriptor ownership;
@@ -27,5 +27,3 @@ Planned behavior:
 - source/destination cleanup;
 - binary-safe copying;
 - partial writes.
-
-I will document the actual implementation decisions and mistakes after the project is complete.
