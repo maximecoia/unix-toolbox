@@ -1,15 +1,41 @@
-/* PROJECT_STATUS: TODO */
-/* Remove the marker above only when the implementation is ready for tests. */
-
+#include <fcntl.h>
 #include <unistd.h>
 
-int main(int argc, char **argv)
+int	main(int argc, char **argv)
 {
-    static const char message[] = "mini_cat: implementation pending\n";
+	int fd;
+	char buffer[4];
+	ssize_t bytes_read;
+	ssize_t bytes_written;
+	ssize_t total_written;
 
-    (void)argc;
-    (void)argv;
-    if (write(2, message, sizeof(message) - 1) == -1)
-        return (1);
-    return (1);
+	if (argc != 2)
+		return (1);
+	fd = open(argv[1], O_RDONLY);
+	if (fd == -1)
+		return (1);
+	bytes_read = read(fd, buffer, sizeof(buffer));
+	while (bytes_read > 0)
+	{
+		total_written = 0;
+		while (total_written < bytes_read)
+		{
+			bytes_written = write(1, buffer + total_written, bytes_read
+					- total_written);
+			if (bytes_written <= 0)
+			{
+				close(fd);
+				return (1);
+			}
+			total_written += bytes_written;
+		}
+		bytes_read = read(fd, buffer, sizeof(buffer));
+	}
+	if (bytes_read == -1)
+	{
+		close(fd);
+		return (1);
+	}
+	close(fd);
+	return (0);
 }
