@@ -14,28 +14,40 @@ Main ideas:
 
 Current status: `PASS: mini_echo`.
 
-## 2. mini_cat — next
+## 2. mini_cat — complete
 
-Move from strings already present in memory to input streams.
+Move from strings already present in memory to bytes coming from a file descriptor.
 
-Main new ideas:
+Main ideas:
 
-- file descriptors;
+- `open()` and file descriptors;
 - `read()`;
 - fixed-size buffers;
-- EOF;
-- partial writes.
+- EOF versus errors;
+- writing only the bytes returned by `read()`;
+- partial writes;
+- descriptor cleanup.
 
-## 3. mini_cp
+Current scope:
+
+```text
+mini_cat file
+```
+
+Current status: `PASS: mini_cat`.
+
+## 3. mini_cp — next
 
 Reuse the stream-copy loop and add an explicit destination.
 
 Main new ideas:
 
-- `open()` flags;
-- creating/truncating files;
+- opening both a source and destination;
+- destination `open()` flags;
+- creating and truncating files;
 - owning more than one descriptor;
-- cleanup after failures.
+- cleanup after failures;
+- reusing the partial-write loop outside stdout.
 
 ## 4. mini_wc
 
