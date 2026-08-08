@@ -91,4 +91,10 @@ set -e
 assert_nonzero "$status" 'missing file'
 assert_empty_file "$TMP/actual" 'missing file stdout'
 
+set +e
+"$BIN" "$TMP/input" 1>&- 2> "$TMP/stderr"
+status=$?
+set -e
+assert_nonzero "$status" 'closed stdout'
+
 printf 'PASS: mini_wc\n'

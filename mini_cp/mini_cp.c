@@ -53,6 +53,12 @@ int	main(int argc, char **argv)
 		close(src_fd);
 		return (1);
 	}
+	if (!S_ISREG(src_stat.st_mode))
+	{
+		fprintf(stderr, "mini_cp: '%s' is not a regular file\n", argv[1]);
+		close(src_fd);
+		return (1);
+	}
 	if (stat(argv[2], &dst_stat) == 0)
 	{
 		if (src_stat.st_dev == dst_stat.st_dev

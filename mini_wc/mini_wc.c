@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -19,14 +20,48 @@ static int	is_space(char c)
 		|| c == '\v' || c == '\f' || c == '\r');
 }
 
-static void	putnbr(long n)
+static int	write_all(int fd, const char *buffer, ssize_t count)
+{
+	ssize_t	total_written;
+	ssize_t	bytes_written;
+
+	total_written = 0;
+	while (total_written < count)
+	{
+		bytes_written = write(fd, buffer + total_written,
+				count - total_written);
+		if (bytes_written == -1)
+		{
+			if (errno == EINTR)
+				continue ;
+			return (-1);
+		}
+		if (bytes_written == 0)
+			return (-1);
+		total_written += bytes_written;
+	}
+	return (0);
+}
+
+static int	putnbr(long n)
 {
 	char	c;
 
-	if (n >= 10)
-		putnbr(n / 10);
+	if (n >= 10 && putnbr(n / 10) == -1)
+		return (-1);
 	c = (n % 10) + '0';
-	write(1, &c, 1);
+	return (write_all(1, &c, 1));
+}
+
+static int	print_result(long lines, long words, long bytes, char *filename)
+{
+	if (putnbr(lines) == -1 || write_all(1, " ", 1) == -1
+		|| putnbr(words) == -1 || write_all(1, " ", 1) == -1
+		|| putnbr(bytes) == -1 || write_all(1, " ", 1) == -1
+		|| write_all(1, filename, ft_strlen(filename)) == -1
+		|| write_all(1, "\n", 1) == -1)
+		return (-1);
+	return (0);
 }
 
 int	main(int argc, char **argv)
@@ -75,13 +110,7 @@ int	main(int argc, char **argv)
 		return (1);
 	}
 	close(fd);
-	putnbr(lines);
-	write(1, " ", 1);
-	putnbr(words);
-	write(1, " ", 1);
-	putnbr(bytes);
-	write(1, " ", 1);
-	write(1, argv[1], ft_strlen(argv[1]));
-	write(1, "\n", 1);
+	if (print_result(lines, words, bytes, argv[1]) == -1)
+		return (1);
 	return (0);
 }

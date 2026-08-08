@@ -110,4 +110,17 @@ assert_files_equal "$TMP/hard-expected" "$TMP/hard-source" \
 assert_files_equal "$TMP/hard-source" "$TMP/hard-alias" \
     'hard-link alias remains intact'
 
+mkdir "$TMP/source-directory"
+printf 'destination must survive directory source\n' > "$TMP/directory-destination"
+cp "$TMP/directory-destination" "$TMP/directory-expected"
+set +e
+"$BIN" "$TMP/source-directory" "$TMP/directory-destination" \
+    > "$TMP/stdout" 2> "$TMP/stderr"
+status=$?
+set -e
+assert_nonzero "$status" 'directory source'
+assert_nonempty_file "$TMP/stderr" 'directory source stderr'
+assert_files_equal "$TMP/directory-expected" "$TMP/directory-destination" \
+    'directory source preserves destination'
+
 printf 'PASS: mini_cp\n'

@@ -24,15 +24,8 @@ Main ideas:
 - `read()`;
 - fixed-size buffers;
 - EOF versus errors;
-- writing only the bytes returned by `read()`;
 - partial writes;
 - descriptor cleanup.
-
-Current scope:
-
-```text
-mini_cat file
-```
 
 Current status: `PASS: mini_cat`.
 
@@ -45,16 +38,11 @@ Main ideas:
 - separate source and destination descriptors;
 - `O_CREAT` and `O_TRUNC`;
 - 1024-byte buffered copying;
-- a reusable partial-write loop;
+- reusable partial-write handling;
 - cleanup with multiple owned descriptors;
-- checking file identity with device and inode metadata;
-- preventing same-file truncation before opening the destination destructively.
-
-Current scope:
-
-```text
-mini_cp source destination
-```
+- device/inode same-file detection;
+- regular-file source validation;
+- validation before destructive destination truncation.
 
 Current status: `PASS: mini_cp`.
 
@@ -70,13 +58,8 @@ Main ideas:
 - explicit whitespace classification;
 - an `in_word` state machine;
 - state surviving between 1024-byte buffer reads;
-- manual decimal output with recursive `putnbr()`.
-
-Current scope:
-
-```text
-mini_wc file
-```
+- recursive decimal output;
+- checked final writes and output-failure propagation.
 
 Current status: `PASS: mini_wc`.
 
@@ -94,6 +77,4 @@ mini_cp
 mini_wc
 ```
 
-Across the four utilities, the progression moved from argument traversal to file descriptors, buffered I/O, multiple-resource ownership, and finally stream-wide state.
-
-The repository's first version now has all four planned commands implemented and tested.
+The final repository now covers argument traversal, file descriptors, buffered I/O, partial writes, multiple-resource ownership, destructive-operation safety, stream-wide state, and explicit syscall failure handling.

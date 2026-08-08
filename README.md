@@ -27,8 +27,8 @@ The goal is not to clone the full GNU/BSD commands. It is to rebuild a focused s
 |---|---|---|
 | [`mini_echo`](mini_echo/) | `argc`, `argv`, nested traversal, `write()` | **Complete** |
 | [`mini_cat`](mini_cat/) | file descriptors, `open()`, `read()`, buffers, EOF, partial writes | **Complete** |
-| [`mini_cp`](mini_cp/) | source/destination descriptors, `O_CREAT`, `O_TRUNC`, same-file safety | **Complete** |
-| [`mini_wc`](mini_wc/) | counters, word-state transitions, buffered stream analysis | **Complete** |
+| [`mini_cp`](mini_cp/) | multiple descriptors, safe `O_TRUNC`, file identity | **Complete** |
+| [`mini_wc`](mini_wc/) | counters, stream state, checked result output | **Complete** |
 
 ## Progression
 
@@ -36,45 +36,45 @@ The goal is not to clone the full GNU/BSD commands. It is to rebuild a focused s
 flowchart LR
     E["mini_echo · argc/argv + write()"]
     C["mini_cat · open/read + buffers"]
-    P["mini_cp · source/destination + safe copy"]
+    P["mini_cp · ownership + safe destructive operations"]
     W["mini_wc · counters + persistent stream state"]
 
     E --> C --> P --> W
 ```
 
-Each step reuses part of the previous one and adds a new problem.
+## Completed sequence
 
-## Current milestone
+### mini_echo
+
+```text
+argv -> characters -> write()
+```
+
+Introduces argument traversal, separator placement, and checked byte output.
+
+### mini_cat
+
+```text
+path -> open() -> read() -> buffer -> stdout
+```
+
+Introduces file descriptors, EOF, buffering, and partial writes.
+
+### mini_cp
+
+```text
+source fd -> buffer -> destination fd
+```
+
+Adds multiple-resource ownership, destination creation/truncation, same-file detection, regular-file validation, and safety checks before destructive operations.
 
 ### mini_wc
 
-The fourth utility completes the first `unix-toolbox` sequence.
-
-Current scope:
-
 ```text
-usage: mini_wc file
+file -> buffer -> state transitions -> counters
 ```
 
-Example:
-
-```sh
-./bin/mini_wc notes.txt
-# 12 84 512 notes.txt
-```
-
-It focuses on:
-
-- validating exactly one file operand;
-- opening and reading a file through a 1024-byte buffer;
-- counting bytes from successful `read()` results;
-- counting lines from newline bytes;
-- detecting words from whitespace-to-non-whitespace transitions;
-- preserving `in_word` state between buffer reads;
-- recognizing space, tab, newline, vertical tab, form feed, and carriage return as whitespace;
-- formatting the final counters manually with `write()`.
-
-Implementation notes and tests: [`mini_wc/README.md`](mini_wc/README.md)
+Adds stream-wide state, word-boundary detection, byte/line/word counters, manual number formatting, and checked final output.
 
 ## Build
 
@@ -84,7 +84,7 @@ Requirements:
 - `make`;
 - a POSIX-compatible shell.
 
-Build all utilities:
+Build everything:
 
 ```sh
 make
@@ -100,7 +100,7 @@ Binaries are written to `bin/`.
 
 ## Test
 
-Run all active suites:
+Run all behavioral suites:
 
 ```sh
 make test
@@ -112,10 +112,15 @@ Compile and test:
 make check
 ```
 
-Run the `mini_wc` suite directly:
+Expected final result:
 
-```sh
-sh tests/test_mini_wc.sh
+```text
+PASS: mini_echo
+PASS: mini_cat
+PASS: mini_cp
+PASS: mini_wc
+
+Suites: 4 passed, 0 skipped, 0 failed
 ```
 
 ## Repository structure
@@ -146,17 +151,13 @@ unix-toolbox/
 - keep each utility small enough to understand end to end;
 - derive control flow from required behavior rather than from remembered code;
 - check system calls instead of assuming success;
-- protect data before destructive operations such as `O_TRUNC`;
-- keep stream state outside individual buffer iterations when it belongs to the whole input;
-- test exact output, file contents, and exit status;
+- validate before destructive operations;
+- preserve stream-wide state across buffer boundaries;
+- test exact output, file contents, failure paths, and exit status;
 - add abstractions only when they solve a real problem.
 
-## Roadmap
+## Status
 
-The first `unix-toolbox` sequence is complete:
+The first `unix-toolbox` sequence is complete.
 
-```text
-mini_echo → mini_cat → mini_cp → mini_wc
-```
-
-A progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).
+A detailed progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).
