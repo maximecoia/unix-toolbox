@@ -91,21 +91,21 @@ Each output operation requests one byte through `write()`, and every call is che
 
 ```mermaid
 flowchart TD
-    A[i = 1] --> B{i < argc?}
-    B -- no --> N[write newline]
-    N --> S[return 0]
+    A["i = 1"] --> B{"i < argc?"}
+    B -->|no| N["write newline"]
+    N --> S["return 0"]
 
-    B -- yes --> C{i > 1?}
-    C -- yes --> D[write space]
-    C -- no --> E[j = 0]
+    B -->|yes| C{"i > 1?"}
+    C -->|yes| D["write space"]
+    C -->|no| E["j = 0"]
     D --> E
 
-    E --> F{argv[i][j] != '\0'?}
-    F -- yes --> G[write character]
-    G --> H[j++]
+    E --> F{"argv[i][j] != 0?"}
+    F -->|yes| G["write character"]
+    G --> H["j++"]
     H --> F
 
-    F -- no --> I[i++]
+    F -->|no| I["i++"]
     I --> B
 ```
 
