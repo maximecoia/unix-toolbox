@@ -36,20 +36,29 @@ mini_cat file
 
 Current status: `PASS: mini_cat`.
 
-## 3. mini_cp — next
+## 3. mini_cp — complete
 
 Reuse the stream-copy loop and add an explicit destination.
 
-Main new ideas:
+Main ideas:
 
-- opening both a source and destination;
-- destination `open()` flags;
-- creating and truncating files;
-- owning more than one descriptor;
-- cleanup after failures;
-- reusing the partial-write loop outside stdout.
+- separate source and destination descriptors;
+- `O_CREAT` and `O_TRUNC`;
+- 1024-byte buffered copying;
+- a reusable partial-write loop;
+- cleanup with multiple owned descriptors;
+- checking file identity with device and inode metadata;
+- preventing same-file truncation before opening the destination destructively.
 
-## 4. mini_wc
+Current scope:
+
+```text
+mini_cp source destination
+```
+
+Current status: `PASS: mini_cp`.
+
+## 4. mini_wc — next
 
 Reuse buffered input and add state that changes while bytes are processed.
 
