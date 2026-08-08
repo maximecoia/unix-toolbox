@@ -58,17 +58,42 @@ mini_cp source destination
 
 Current status: `PASS: mini_cp`.
 
-## 4. mini_wc — next
+## 4. mini_wc — complete
 
-Reuse buffered input and add state that changes while bytes are processed.
+Reuse buffered input and change the problem from transporting bytes to interpreting a stream.
 
-Main new ideas:
+Main ideas:
 
-- counters;
-- word-boundary state;
-- state surviving between buffer reads;
-- number formatting.
+- independent line, word, and byte counters;
+- byte counts derived directly from `read()`;
+- newline counting;
+- explicit whitespace classification;
+- an `in_word` state machine;
+- state surviving between 1024-byte buffer reads;
+- manual decimal output with recursive `putnbr()`.
 
-## Finish line
+Current scope:
 
-The first version of this repository is done when all four commands are implemented, their tests pass, and I can explain/rebuild the important control flow without depending on the old source.
+```text
+mini_wc file
+```
+
+Current status: `PASS: mini_wc`.
+
+## Finish line — reached
+
+The first `unix-toolbox` sequence is complete:
+
+```text
+mini_echo
+   ↓
+mini_cat
+   ↓
+mini_cp
+   ↓
+mini_wc
+```
+
+Across the four utilities, the progression moved from argument traversal to file descriptors, buffered I/O, multiple-resource ownership, and finally stream-wide state.
+
+The repository's first version now has all four planned commands implemented and tested.

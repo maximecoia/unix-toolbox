@@ -28,7 +28,7 @@ The goal is not to clone the full GNU/BSD commands. It is to rebuild a focused s
 | [`mini_echo`](mini_echo/) | `argc`, `argv`, nested traversal, `write()` | **Complete** |
 | [`mini_cat`](mini_cat/) | file descriptors, `open()`, `read()`, buffers, EOF, partial writes | **Complete** |
 | [`mini_cp`](mini_cp/) | source/destination descriptors, `O_CREAT`, `O_TRUNC`, same-file safety | **Complete** |
-| [`mini_wc`](mini_wc/) | counters and stream state | Not started |
+| [`mini_wc`](mini_wc/) | counters, word-state transitions, buffered stream analysis | **Complete** |
 
 ## Progression
 
@@ -37,7 +37,7 @@ flowchart LR
     E["mini_echo · argc/argv + write()"]
     C["mini_cat · open/read + buffers"]
     P["mini_cp · source/destination + safe copy"]
-    W["mini_wc · stream state + counters"]
+    W["mini_wc · counters + persistent stream state"]
 
     E --> C --> P --> W
 ```
@@ -46,34 +46,35 @@ Each step reuses part of the previous one and adds a new problem.
 
 ## Current milestone
 
-### mini_cp
+### mini_wc
 
-The third completed utility reproduces a deliberately small subset of `cp`.
+The fourth utility completes the first `unix-toolbox` sequence.
 
 Current scope:
 
 ```text
-usage: mini_cp source destination
+usage: mini_wc file
 ```
 
 Example:
 
 ```sh
-./bin/mini_cp source.txt copy.txt
+./bin/mini_wc notes.txt
+# 12 84 512 notes.txt
 ```
 
 It focuses on:
 
-- validating exactly one source and one destination;
-- opening the source read-only;
-- inspecting file identity before truncating the destination;
-- rejecting copies where source and destination resolve to the same file;
-- creating or truncating the destination with `open()`;
-- copying data through a fixed-size buffer;
-- handling partial writes with a reusable `write_all()` helper;
-- closing both owned file descriptors on normal and error paths.
+- validating exactly one file operand;
+- opening and reading a file through a 1024-byte buffer;
+- counting bytes from successful `read()` results;
+- counting lines from newline bytes;
+- detecting words from whitespace-to-non-whitespace transitions;
+- preserving `in_word` state between buffer reads;
+- recognizing space, tab, newline, vertical tab, form feed, and carriage return as whitespace;
+- formatting the final counters manually with `write()`.
 
-Implementation notes and tests: [`mini_cp/README.md`](mini_cp/README.md)
+Implementation notes and tests: [`mini_wc/README.md`](mini_wc/README.md)
 
 ## Build
 
@@ -92,7 +93,7 @@ make
 Build one utility:
 
 ```sh
-make mini_cp
+make mini_wc
 ```
 
 Binaries are written to `bin/`.
@@ -111,19 +112,11 @@ Compile and test:
 make check
 ```
 
-Run the `mini_cp` suite directly:
+Run the `mini_wc` suite directly:
 
 ```sh
-sh tests/test_mini_cp.sh
+sh tests/test_mini_wc.sh
 ```
-
-Unfinished commands keep the marker:
-
-```c
-/* PROJECT_STATUS: TODO */
-```
-
-Their suites are skipped until the implementation is activated.
 
 ## Repository structure
 
@@ -139,6 +132,8 @@ unix-toolbox/
 │   ├── README.md
 │   └── mini_cp.c
 ├── mini_wc/
+│   ├── README.md
+│   └── mini_wc.c
 ├── tests/
 ├── docs/
 ├── .github/workflows/ci.yml
@@ -152,11 +147,16 @@ unix-toolbox/
 - derive control flow from required behavior rather than from remembered code;
 - check system calls instead of assuming success;
 - protect data before destructive operations such as `O_TRUNC`;
+- keep stream state outside individual buffer iterations when it belongs to the whole input;
 - test exact output, file contents, and exit status;
 - add abstractions only when they solve a real problem.
 
 ## Roadmap
 
-The next utility is [`mini_wc`](mini_wc/).
+The first `unix-toolbox` sequence is complete:
 
-A short progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).
+```text
+mini_echo → mini_cat → mini_cp → mini_wc
+```
+
+A progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).
