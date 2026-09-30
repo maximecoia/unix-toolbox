@@ -199,8 +199,13 @@ The tests cover:
 - missing operands;
 - too many operands;
 - a nonexistent input file;
+- a directory operand, which passes `open()` and fails at `read()`;
 - successful exit status for valid input;
 - non-zero exit status for invalid or failed input.
+
+`tests/test_short_write.sh` then runs the same source rebuilt with every
+`write()` cut to one byte, and checks that the output is still byte for byte
+the input.
 
 Expected result:
 
