@@ -46,4 +46,13 @@ status=$?
 set -e
 assert_nonzero "$status" 'missing file'
 
+# open() accepts a directory and read() is what fails, so this is the one
+# case that reaches the read error path instead of stopping at open().
+mkdir "$TMP/directory"
+set +e
+"$BIN" "$TMP/directory" > "$TMP/actual" 2> "$TMP/stderr"
+status=$?
+set -e
+assert_nonzero "$status" 'directory operand'
+
 printf 'PASS: mini_cat\n'
