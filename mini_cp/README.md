@@ -139,6 +139,8 @@ The tests cover normal, empty, large and binary copies, destination truncation, 
 
 `tests/test_short_write.sh` then runs the same source rebuilt with every `write()` cut to one byte, and checks that the copy is still byte for byte the source.
 
+`tests/test_read_fault.sh` runs it rebuilt with a `read()` that fails on demand: an `EIO` after the first chunk must fail the copy, and an `EINTR` on the first call must be retried and leave the copy whole.
+
 Expected result:
 
 ```text

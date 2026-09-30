@@ -96,8 +96,10 @@ Build one utility:
 make mini_wc
 ```
 
-Binaries are written to `bin/`. `make short` also builds `bin/short/`, the
-same utilities with every `write()` cut to one byte, which the tests use.
+Binaries are written to `bin/`. Two more builds exist for the tests only:
+`make short` writes `bin/short/`, the same utilities with every `write()` cut
+to one byte, and `make read_fault` writes `bin/read_fault/mini_cp`, whose
+`read()` fails on demand.
 
 ## Test
 
@@ -131,7 +133,10 @@ PASS: mini_wc
 ==> test_short_write.sh
 PASS: short writes
 
-Suites: 5 passed, 0 skipped, 0 failed
+==> test_read_fault.sh
+PASS: read faults
+
+Suites: 6 passed, 0 skipped, 0 failed
 ```
 
 A suite stops at its first failed check and prints its label, so `PASS` means
@@ -144,7 +149,7 @@ A suite that passes proves nothing until it has been seen to fail. On
 suites were run again after `make clean`. The clean build matters: `make`
 compares timestamps to the second, so a change saved in the same second as the
 last build is not compiled, and the first run of this measurement caught
-nothing for that reason. Of thirteen changes, eleven are caught:
+nothing for that reason. Of fourteen changes, thirteen are caught:
 
 | Utility | What was broken | Caught by |
 |---|---|---|
@@ -159,6 +164,8 @@ nothing for that reason. Of thirteen changes, eleven are caught:
 | `mini_cat` | a short write taken as complete | `mini_cat bytes under short writes` |
 | `mini_cp` | a short write taken as complete | `mini_cp bytes under short writes` |
 | `mini_wc` | a short write taken as complete | `mini_wc output under short writes` |
+| `mini_cp` | a failed `read()` taken for the end of the file | `mini_cp read error` |
+| `mini_cp` | an interrupted `read()` no longer retried | `mini_cp after an interrupted read` |
 
 The two `directory operand` checks were added because this run found the read
 error path untested: a directory passes `open()` and fails at `read()`, and no
@@ -180,14 +187,26 @@ reason, so each shortened call is logged, and the suite fails when a utility
 made none. Building `bin/short/` without the redirection turns it red on
 `mini_cat shortened calls was empty`.
 
-Two changes still pass, and they are listed here rather than left to be found:
+The read error of `mini_cp` needed the same trick. A directory, the usual way
+to make `read()` fail, is refused before the copy starts, so no shell test
+reached that path. [`tests/read_fault.c`](tests/read_fault.c) stands in for
+`read()`, and `make read_fault` rebuilds `mini_cp` with `-Dread=faulty_read`.
+With `READ_FAULT=eio`, the first call reads and every later one fails with
+`EIO`, so the error lands after 1024 bytes are copied: `mini_cp` must exit
+non-zero and say why. With `READ_FAULT=eintr`, the first call fails with
+`EINTR`, as a signal would make it, and the copy must still be whole. Each
+injected fault is logged, and building `bin/read_fault/` without the
+redirection turns the suite red on `mini_cp read error returned status 0`.
 
-- **A failed `read()` in `mini_cp`.** A directory is refused before the copy
-  starts, so the read error path cannot be reached from the shell. The same
-  compile-time redirection, applied to `read()`, would reach it.
-- **One ignored write failure in `mini_echo`.** The check on the final newline
-  still fails, so the exit status stays right. The change is not observable,
-  and no test could catch it.
+A third way to get the read error wrong, neither stopping on it nor retrying
+it, makes `mini_cp` loop forever on the failing call. The suite then never
+ends rather than failing, so the CI job stops after ten minutes instead of
+GitHub's default of six hours.
+
+One change still passes, and it is listed here rather than left to be found:
+**one ignored write failure in `mini_echo`.** The check on the final newline
+still fails, so the exit status stays right. The change is not observable, and
+no test could catch it.
 
 ## Repository structure
 
