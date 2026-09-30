@@ -12,7 +12,8 @@ for suite in \
     "$TEST_DIR/test_mini_cat.sh" \
     "$TEST_DIR/test_mini_cp.sh" \
     "$TEST_DIR/test_mini_wc.sh" \
-    "$TEST_DIR/test_short_write.sh"
+    "$TEST_DIR/test_short_write.sh" \
+    "$TEST_DIR/test_read_fault.sh"
 do
     printf '\n==> %s\n' "$(basename "$suite")"
     sh "$suite"

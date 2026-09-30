@@ -13,7 +13,14 @@ SHORT_PROGRAMS := mini_cat mini_cp mini_wc
 SHORT_TARGETS := $(addprefix $(SHORT_DIR)/,$(SHORT_PROGRAMS))
 SHORT_OBJECT := $(SHORT_DIR)/short_write.o
 
-.PHONY: all $(PROGRAMS) short status test check clean fclean re help
+# mini_cp rebuilt with every read() sent to tests/read_fault.c, which fails on
+# demand. A directory is refused before the copy starts, so this is the only
+# way a test reaches its read error path.
+FAULT_DIR := $(BIN_DIR)/read_fault
+FAULT_TARGETS := $(FAULT_DIR)/mini_cp
+FAULT_OBJECT := $(FAULT_DIR)/read_fault.o
+
+.PHONY: all $(PROGRAMS) short read_fault status test check clean fclean re help
 
 all: $(TARGETS)
 
@@ -43,6 +50,16 @@ $(SHORT_DIR)/mini_wc: mini_wc/mini_wc.c $(SHORT_OBJECT)
 $(SHORT_TARGETS):
 	$(CC) $(CFLAGS) -Dwrite=short_write $< $(SHORT_OBJECT) -o $@
 
+read_fault: $(FAULT_TARGETS)
+
+# Same rule as above: the object keeps the real read().
+$(FAULT_OBJECT): tests/read_fault.c
+	@mkdir -p $(FAULT_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(FAULT_DIR)/mini_cp: mini_cp/mini_cp.c $(FAULT_OBJECT)
+	$(CC) $(CFLAGS) -Dread=faulty_read $< $(FAULT_OBJECT) -o $@
+
 status:
 	@for program in $(PROGRAMS); do \
 		if grep -q 'PROJECT_STATUS: TODO' "$$program/$$program.c"; then \
@@ -52,7 +69,7 @@ status:
 		fi; \
 	done
 
-test: all short
+test: all short read_fault
 	@sh tests/run.sh
 
 check:
@@ -75,6 +92,7 @@ help:
 		'  mini_cp      Build bin/mini_cp' \
 		'  mini_wc      Build bin/mini_wc' \
 		'  short        Build bin/short/, the utilities under one-byte writes' \
+		'  read_fault   Build bin/read_fault/mini_cp, with read() failing on demand' \
 		'  status       Show TODO or ACTIVE for each command' \
 		'  test         Build and run active behavioral tests' \
 		'  check        Validate shell syntax, build, and test' \
