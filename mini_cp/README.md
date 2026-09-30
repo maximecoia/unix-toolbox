@@ -137,6 +137,8 @@ sh tests/test_mini_cp.sh
 
 The tests cover normal, empty, large and binary copies, destination truncation, invalid arguments and paths, same-file aliases, hard links, and the regression case where a directory source must leave an existing destination unchanged.
 
+`tests/test_short_write.sh` then runs the same source rebuilt with every `write()` cut to one byte, and checks that the copy is still byte for byte the source.
+
 Expected result:
 
 ```text

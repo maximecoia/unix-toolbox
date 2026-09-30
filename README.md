@@ -96,7 +96,8 @@ Build one utility:
 make mini_wc
 ```
 
-Binaries are written to `bin/`.
+Binaries are written to `bin/`. `make short` also builds `bin/short/`, the
+same utilities with every `write()` cut to one byte, which the tests use.
 
 ## Test
 
@@ -127,7 +128,10 @@ PASS: mini_cp
 ==> test_mini_wc.sh
 PASS: mini_wc
 
-Suites: 4 passed, 0 skipped, 0 failed
+==> test_short_write.sh
+PASS: short writes
+
+Suites: 5 passed, 0 skipped, 0 failed
 ```
 
 A suite stops at its first failed check and prints its label, so `PASS` means
@@ -140,7 +144,7 @@ A suite that passes proves nothing until it has been seen to fail. On
 suites were run again after `make clean`. The clean build matters: `make`
 compares timestamps to the second, so a change saved in the same second as the
 last build is not compiled, and the first run of this measurement caught
-nothing for that reason.
+nothing for that reason. Of thirteen changes, eleven are caught:
 
 | Utility | What was broken | Caught by |
 |---|---|---|
@@ -152,18 +156,35 @@ nothing for that reason.
 | `mini_wc` | the word state reset at every `read()` | `word state survives buffer boundary` |
 | `mini_wc` | a failed `read()` taken for the end of the file | `directory operand` |
 | `mini_wc` | the tab no longer counted as whitespace | `whitespace counts` |
+| `mini_cat` | a short write taken as complete | `mini_cat bytes under short writes` |
+| `mini_cp` | a short write taken as complete | `mini_cp bytes under short writes` |
+| `mini_wc` | a short write taken as complete | `mini_wc output under short writes` |
 
 The two `directory operand` checks were added because this run found the read
 error path untested: a directory passes `open()` and fails at `read()`, and no
 case reached it before.
 
-Four changes still pass, and they are listed here rather than left to be found:
+The three short-write checks needed more than a shell. A real `write()` may
+return fewer bytes than it was asked for, on a pipe, a socket or a terminal,
+but a shell test cannot make that happen on demand, so the loops that handle it
+had never run under test. [`tests/short_write.c`](tests/short_write.c) is a
+stand-in for `write()` that writes one byte per call, and `make short` rebuilds
+each utility with `-Dwrite=short_write`, so every call it makes lands there. On
+a 2004-byte file, `mini_cat` makes 1503 shortened calls and still returns every
+byte. The redirection happens at compile time rather than through
+`LD_PRELOAD` or `DYLD_INSERT_LIBRARIES`, so it behaves the same on Linux and on
+macOS.
 
-- **A short write taken as complete**, in `mini_cat` and in `mini_cp`. Both
-  loops handle it, but a shell test cannot make `write()` return fewer bytes
-  than asked, so the tests never see that code run.
+A stand-in that silently does nothing would make that suite pass for the wrong
+reason, so each shortened call is logged, and the suite fails when a utility
+made none. Building `bin/short/` without the redirection turns it red on
+`mini_cat shortened calls was empty`.
+
+Two changes still pass, and they are listed here rather than left to be found:
+
 - **A failed `read()` in `mini_cp`.** A directory is refused before the copy
-  starts, so the read error path cannot be reached from the shell.
+  starts, so the read error path cannot be reached from the shell. The same
+  compile-time redirection, applied to `read()`, would reach it.
 - **One ignored write failure in `mini_echo`.** The check on the final newline
   still fails, so the exit status stays right. The change is not observable,
   and no test could catch it.

@@ -98,7 +98,9 @@ Run:
 sh tests/test_mini_wc.sh
 ```
 
-The tests cover empty input, known counts, no final newline, all supported whitespace classes, words crossing buffer boundaries, filenames containing spaces, invalid arguments, missing files, and a closed-stdout regression proving output failures return non-zero.
+The tests cover empty input, known counts, no final newline, all supported whitespace classes, words crossing buffer boundaries, filenames containing spaces, invalid arguments, missing files, a directory operand that fails at `read()` rather than at `open()`, and a closed-stdout regression proving output failures return non-zero.
+
+`tests/test_short_write.sh` then runs the same source rebuilt with every `write()` cut to one byte, and checks that the counts line is unchanged.
 
 Expected result:
 
