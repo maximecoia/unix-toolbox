@@ -115,13 +115,58 @@ make check
 Expected final result:
 
 ```text
+==> test_mini_echo.sh
 PASS: mini_echo
+
+==> test_mini_cat.sh
 PASS: mini_cat
+
+==> test_mini_cp.sh
 PASS: mini_cp
+
+==> test_mini_wc.sh
 PASS: mini_wc
 
 Suites: 4 passed, 0 skipped, 0 failed
 ```
+
+A suite stops at its first failed check and prints its label, so `PASS` means
+every check of that suite held.
+
+## What the tests prove
+
+A suite that passes proves nothing until it has been seen to fail. On
+2026-09-30 each utility was broken on purpose, one change at a time, and the
+suites were run again after `make clean`. The clean build matters: `make`
+compares timestamps to the second, so a change saved in the same second as the
+last build is not compiled, and the first run of this measurement caught
+nothing for that reason.
+
+| Utility | What was broken | Caught by |
+|---|---|---|
+| `mini_echo` | the separator between operands dropped | `multiple operands output` |
+| `mini_cat` | only the first `read()` kept | `text file bytes` |
+| `mini_cat` | a failed `read()` taken for the end of the file | `directory operand` |
+| `mini_cp` | the same-file check turned off | `same pathname` |
+| `mini_cp` | the regular-file check turned off | `directory source preserves destination` |
+| `mini_wc` | the word state reset at every `read()` | `word state survives buffer boundary` |
+| `mini_wc` | a failed `read()` taken for the end of the file | `directory operand` |
+| `mini_wc` | the tab no longer counted as whitespace | `whitespace counts` |
+
+The two `directory operand` checks were added because this run found the read
+error path untested: a directory passes `open()` and fails at `read()`, and no
+case reached it before.
+
+Four changes still pass, and they are listed here rather than left to be found:
+
+- **A short write taken as complete**, in `mini_cat` and in `mini_cp`. Both
+  loops handle it, but a shell test cannot make `write()` return fewer bytes
+  than asked, so the tests never see that code run.
+- **A failed `read()` in `mini_cp`.** A directory is refused before the copy
+  starts, so the read error path cannot be reached from the shell.
+- **One ignored write failure in `mini_echo`.** The check on the final newline
+  still fails, so the exit status stays right. The change is not observable,
+  and no test could catch it.
 
 ## Repository structure
 
@@ -154,6 +199,7 @@ unix-toolbox/
 - validate before destructive operations;
 - preserve stream-wide state across buffer boundaries;
 - test exact output, file contents, failure paths, and exit status;
+- break each check on purpose before trusting it;
 - add abstractions only when they solve a real problem.
 
 ## Status
@@ -161,3 +207,7 @@ unix-toolbox/
 The first `unix-toolbox` sequence is complete.
 
 A detailed progression overview is available in [`docs/roadmap.md`](docs/roadmap.md).
+
+The C that came after it is the libft, a 42 subject kept private by the
+school's charter, and then the C inference engine of the ML Systems roadmap,
+traced in [`learning_tree-ML-systems`](https://github.com/maximecoia/learning_tree-ML-systems).
